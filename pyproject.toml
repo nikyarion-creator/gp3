@@ -1,0 +1,26 @@
+[project]
+name = "ai-agent-gp3"
+version = "0.1.0"
+description = "Multi-agent ML pipeline for fake job postings classification"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain>=1.2.15",
+    "langchain-groq>=1.1.2",
+    "langgraph>=1.1.9",
+    "pydantic>=2.13.3",
+    "pydantic-settings>=2.14.0",
+    "pandas>=2.2.0",
+    "numpy>=2.0.0",
+    "scikit-learn>=1.5.0",
+    "joblib>=1.4.0",
+    "nbformat>=5.10.0",
+    "plotly>=5.24.0",
+    "matplotlib>=3.10.9",
+    "seaborn>=0.13.2",
+    "langchain-google-genai>=4.2.2",
+    "langchain-anthropic>=1.4.1",
+    "langchain-openai>=1.2.1",
+    "xgboost>=3.2.0",
+    "lightgbm>=4.6.0",
+]

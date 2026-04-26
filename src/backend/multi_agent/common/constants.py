@@ -1,0 +1,1 @@
+STRUCTURED_METHOD = "function_calling"
