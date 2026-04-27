@@ -12,7 +12,8 @@ def _make(model, temperature, top_p, max_tokens):
         temperature=temperature,
         top_p=top_p,
         max_tokens=max_tokens,
-        api_key=_config.OPENAI_API_KEY,
+        api_key=_config.OPENROUTER_API_KEY,
+        base_url=_config.OPENROUTER_BASE_URL,
         timeout=120,
         model_kwargs={"parallel_tool_calls": True},
     )

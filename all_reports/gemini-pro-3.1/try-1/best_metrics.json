@@ -1,0 +1,9 @@
+{
+    "model_name": "XGBoost_Tuned_MetaFeatures",
+    "test_metrics": {
+        "f1": 0.6225165562913907,
+        "precision": 0.5035714285714286,
+        "recall": 0.815028901734104,
+        "roc_auc": 0.9692569799853579
+    }
+}

@@ -1,0 +1,1 @@
+{"model_name": "gradient_boosting_tuned", "test_metrics": {"f1": 0.8498402555910544, "precision": 0.95, "recall": 0.7687861271676301, "roc_auc": 0.9844390957315798, "pr_auc": 0.8993570538956933, "threshold": 0.7160583343171846}}

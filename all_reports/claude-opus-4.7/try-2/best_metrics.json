@@ -1,0 +1,43 @@
+{
+  "model_name": "GradientBoosting",
+  "best_params": {
+    "subsample": 0.9,
+    "n_estimators": 400,
+    "max_depth": 3,
+    "learning_rate": 0.15
+  },
+  "test_metrics": {
+    "f1": 0.8525641025641025,
+    "precision": 0.9568345323741008,
+    "recall": 0.7687861271676301,
+    "roc_auc": 0.9850013334035423,
+    "pr_auc": 0.8892613178038746
+  },
+  "val_metrics_table": [
+    {
+      "model": "GradientBoosting",
+      "f1": 0.7949367088607595,
+      "precision": 0.7072072072072072,
+      "recall": 0.9075144508670521,
+      "roc_auc": 0.9923494910135398,
+      "pr_auc": 0.9377434290965412
+    },
+    {
+      "model": "RandomForest",
+      "f1": 0.7436823104693141,
+      "precision": 0.9903846153846154,
+      "recall": 0.5953757225433526,
+      "roc_auc": 0.9948804098389894,
+      "pr_auc": 0.9434661490257613
+    },
+    {
+      "model": "LogReg",
+      "f1": 0.4573082489146165,
+      "precision": 0.305019305019305,
+      "recall": 0.9132947976878613,
+      "roc_auc": 0.9668432647833687,
+      "pr_auc": 0.7031850871995634
+    }
+  ],
+  "n_features": 145
+}

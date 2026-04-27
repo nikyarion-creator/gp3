@@ -1,0 +1,18 @@
+{
+  "model_name": "RandomForest_num",
+  "best_params": {
+    "n_estimators": 300,
+    "min_samples_leaf": 2,
+    "max_depth": 30
+  },
+  "test_metrics": {
+    "f1": 0.7412587412587412,
+    "precision": 0.9380530973451328,
+    "recall": 0.6127167630057804,
+    "roc_auc": 0.982395676035596,
+    "pr_auc": 0.8443832418652167,
+    "threshold": 0.4980312435598383
+  },
+  "n_features_numeric": 88,
+  "n_features_tfidf": 20000
+}
