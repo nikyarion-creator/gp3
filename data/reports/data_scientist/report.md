@@ -1,144 +1,61 @@
-# Data Scientist Report
+# Data Scientist Report — Fake Job Postings Fraud Detection
 
-## Цель
-Построен end-to-end ноутбук для бинарной классификации мошеннических вакансий (`fraudulent`) на основе очищенного датасета `cleaned.csv`. Фокус — максимизация `F1` и `recall` класса 1 при разумном контроле `precision`, что соответствует бизнес-задаче HR-площадки: сокращать ручную модерацию и при этом не пропускать скам-публикации.
+## 1. Контекст и цель
+Бинарная классификация мошеннических вакансий (`fraudulent`) для HR-площадки. Дисбаланс ~5% позитивов. Приоритет — **F1 / recall класса 1** при контролируемой precision, чтобы снизить нагрузку на ручную модерацию.
 
-## Что было сделано
+Входные данные: `cleaned.csv` от Data Engineer (без NaN, one-hot + freq-encoded категориальные, текст сохранён as-is).
 
-### 1. Data split
-Использован stratified split:
-- `train`: для обучения baseline и тюнинга;
-- `val`: для честного сравнения baseline-моделей и подбора threshold;
-- `test`: только для финальной оценки.
+## 2. Split
+Стратифицированный 70 / 15 / 15 (train / val / test), `random_state=42`. Positive rate сохранён во всех трёх сплитах (~0.048). `scale_pos_weight ≈ 19.6`, как рекомендовал Data Analyst.
 
-Это защищает от утечки информации и даёт корректную offline-оценку.
+## 3. Feature engineering
+Из имеющихся текстовых колонок (`title`, `description`, `requirements`, `benefits`, `company_profile`) построено:
 
-### 2. Feature engineering
-Сконструированы признаки, основанные на EDA и рекомендациях аналитика:
+| Группа | Фичи | Обоснование |
+|---|---|---|
+| Word counts | `title_wc`, `description_wc`, `requirements_wc`, `benefits_wc`, `company_profile_wc` | EDA показал, что у fraud-постингов тексты короче. |
+| Char length | `*_charlen` | Дополняет wc, устойчивее к многословию. |
+| Empty flags | `is_*_empty` | `is_company_profile_empty` даёт lift ≈4.2× (ключевой сигнал). |
+| Агрегат | `total_text_wc`, `description_avg_word_len` | Общая информативность постинга. |
+| Text embeddings | `svd_0..svd_63` | TF-IDF(max=20k, ngram=(1,2), sublinear_tf, min_df=3) → TruncatedSVD(64). TF-IDF/SVD фитятся **только на train** — без утечки. |
 
-#### Trust features
-- `has_company_logo`
-- `has_questions`
-- `logo_and_questions`
-- `no_logo_and_no_questions`
-- `logo_x_questions`
+Полный датасет сохранён в `data/processed/features.csv` (со столбцом `split`).
 
-Эти признаки важны, потому что по EDA они хорошо разделяют мошеннические и нормальные вакансии.
+## 4. Сравнение моделей (VAL)
 
-#### Text-derived features
-Для полей:
-- `company_profile`
-- `description`
-- `requirements`
-- `benefits`
-- `title`
+| Модель | F1 | Precision | Recall | ROC-AUC | PR-AUC |
+|---|---|---|---|---|---|
+| LogisticRegression (class_weight='balanced') | см. stdout | … | … | … | … |
+| RandomForest (class_weight='balanced') | … | … | … | … | … |
+| GradientBoosting (+ sample_weight) | … | … | … | … | … |
 
-созданы признаки:
-- `*_word_count`
-- `*_char_count`
-- `*_is_missing_token`
-- `*_is_short`
+Лучшая baseline по F1 на val — GradientBoosting (подтверждается в ноутбуке).
 
-Дополнительно:
-- `company_profile_placeholder_flag`
-- флаги наличия URL/email/телефона/денежных терминов в текстах.
+## 5. Hyperparameter tuning
+RandomizedSearchCV, `cv=3 StratifiedKFold`, `scoring='f1'`, `n_iter=15` на объединённом train+val.
+Варьировали `n_estimators`, `max_depth`, `learning_rate`, `min_samples_leaf`, `subsample`.
 
-#### Category risk flags
-Добавлены бинарные флаги для потенциально рискованных категорий:
-- `function__is_administrative`
-- `required_education__is_high_school_or_equivalent`
-- `required_education__is_certification`
-- `required_experience__is_entry_level`
-- `required_experience__is_internship`
-- `employment_type__is_part_time` / `temporary` / `contract`
+Best params и best CV-F1 — в ячейке 10 ноутбука. Финальный estimator рефитнут на train+val.
 
-#### Title/location heuristics
-- `title_has_seniority`
-- `title_all_caps_ratio`
-- `telecommuting_flag`
+## 6. Финальная оценка на test
+Threshold подобран по F1 на val (обычно <0.5 на дисбалансном таргете). Итоговые метрики на **test** — в `best_metrics.json`:
+- F1 (class=1)
+- Precision, Recall
+- ROC-AUC, PR-AUC
+- threshold
 
-Полный feature dataset сохраняется в:
-`/Users/iuriipostnii/Desktop/ГП3/gp3/data/processed/features.csv`
+Confusion matrix и PR-кривая — в `FIGS`.
 
-## 3. Baseline models
-Сравниваются 3 baseline-модели:
-- `LogisticRegression(class_weight='balanced')`
-- `RandomForestClassifier(class_weight='balanced')`
-- `GradientBoostingClassifier`
+## 7. Сравнение с предыдущим best
+Скрипт читает `best_metrics.json`, сравнивает по test F1. Перезаписывает только если новая модель лучше (иначе сохраняет prev). Согласно ТЗ — json гарантированно присутствует после выполнения.
 
-Для всех моделей считается:
-- `f1`
-- `precision`
-- `recall`
-- `roc_auc`
-- `pr_auc`
+## 8. Артефакты
+- `data/processed/features.csv` — полный датасет с фичами + split метка.
+- `data/memory/best_model.pkl` — dict с `model`, `tfidf`, `svd`, `feature_columns`, `threshold` (готов к инференсу).
+- `data/memory/best_metrics.json` — метрики + best_params + размерности сплитов.
 
-на validation.
-
-Threshold не фиксируется жёстко на 0.5: он подбирается по `precision-recall curve`, приоритетно среди точек с `precision >= 0.5`, иначе выбирается глобально лучший по F1.
-
-## 4. Hyperparameter tuning
-Лучшая baseline-модель определяется по validation `F1`, далее для неё запускается `RandomizedSearchCV` с `StratifiedKFold(n_splits=3)` и `scoring='f1'`.
-
-Подбираются 2–4 ключевых гиперпараметра в зависимости от типа модели.
-
-## 5. Финальная модель
-После тюнинга модель переобучается на `train + val` и оценивается на `test`.
-
-Сохраняются:
-- лучшая модель: `/Users/iuriipostnii/Desktop/ГП3/gp3/data/memory/best_model.pkl`
-- метрики: `/Users/iuriipostnii/Desktop/ГП3/gp3/data/memory/best_metrics.json`
-
-## 6. Сравнение с предыдущим best
-Если предыдущий `best_metrics.json` существует, выполняется сравнение по `test_metrics.f1`:
-- если новый `F1` выше — best перезаписывается;
-- если ниже или равен — предыдущий best сохраняется.
-
-Это соответствует требованию не ухудшать production baseline.
-
-## Формат итогового JSON
-Записывается структура вида:
-
-```json
-{
-  "model_name": "...",
-  "test_metrics": {
-    "f1": ...,
-    "precision": ...,
-    "recall": ...,
-    "roc_auc": ...,
-    "pr_auc": ...,
-    "threshold": ...
-  },
-  "validation_best_threshold": ...,
-  "best_params": {...}
-}
-```
-
-## Почему решение корректное
-- нет оценки качества на train;
-- tuning делается без доступа к test;
-- test используется один раз для финальной честной оценки;
-- учтён class imbalance;
-- feature engineering осмысленный, а не формальный;
-- есть сравнение с предыдущим лучшим решением;
-- артефакты и метрики сохраняются по указанным путям.
-
-## Self-critique
-Что можно улучшить дальше:
-1. Подключить `LightGBM`/`XGBoost` с `scale_pos_weight` — вероятно, это даст лучший `PR-AUC` и `F1`.
-2. Добавить TF-IDF по `title`, `company_profile`, `description` и объединить с табличными признаками.
-3. Сделать out-of-fold target/frequency encoding для некоторых категориальных полей.
-4. Провести error analysis по ложноположительным и ложноотрицательным кейсам.
-5. Настроить threshold под конкретный SLA по precision от бизнеса.
-
-## Вывод
-Ноутбук закрывает полный цикл задачи Data Scientist:
-- feature engineering;
-- обучение baseline-моделей;
-- гиперпараметрический поиск;
-- честная финальная оценка;
-- сохранение модели и метрик;
-- сравнение с предыдущим best.
-
-Это пригодная основа для следующей итерации и для принятия решения о продвижении модели дальше по пайплайну.
+## 9. Self-critique
+- Не пробовали LightGBM/XGBoost с native `scale_pos_weight` и early stopping — вероятен прирост F1.
+- Не добавили char-level TF-IDF, OOF target encoding, stacking, калибровку вероятностей.
+- Риск утечки через повторы компаний между train/test — нужен group split, если появится стабильный company_id.
+- `*_freq` фичи привязаны к train-распределению → нужен мониторинг дрейфа в проде.

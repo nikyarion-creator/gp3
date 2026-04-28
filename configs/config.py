@@ -7,7 +7,7 @@ class Config(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     
-    BASE_MODEL: str = "google/gemini-3.1-pro-preview"
+    BASE_MODEL: str = "anthropic/claude-opus-4.7"
 
     SUPERVISOR_MODEL: str = BASE_MODEL
     SUPERVISOR_TEMPERATURE: float = 0.01

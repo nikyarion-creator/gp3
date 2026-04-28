@@ -1,0 +1,11 @@
+column,strategy,reason
+job_id,drop,"identifier, no predictive value"
+salary_range,drop_column,NaN ratio 83.96% > 70%
+telecommuting,keep as_is,"binary flag, no NaN"
+has_company_logo,keep as_is,"binary flag, no NaN"
+has_questions,keep as_is,"binary flag, no NaN"
+title,as_is (NaN → ''),"free text, 0 NaN filled with empty string; featurization is DS responsibility"
+company_profile,as_is (NaN → ''),"free text, 3308 NaN filled with empty string; featurization is DS responsibility"
+description,as_is (NaN → ''),"free text, 1 NaN filled with empty string; featurization is DS responsibility"
+requirements,as_is (NaN → ''),"free text, 2696 NaN filled with empty string; featurization is DS responsibility"
+benefits,as_is (NaN → ''),"free text, 7212 NaN filled with empty string; featurization is DS responsibility"
